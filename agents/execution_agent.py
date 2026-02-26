@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 
 from agents.market_analysis_agent import TradeSignal
 from agents.risk_management_agent import ApprovedTrade
-from config.settings import STARTING_BALANCE, TRADES_DIR
+from config.settings import MAX_TRADES_PER_SESSION, STARTING_BALANCE, TRADES_DIR
 from utils.data_fetcher import DataFetcher
 from utils.logger import setup_logger
 
@@ -62,6 +62,7 @@ class ExecutionAgent:
         self._positions: Dict[str, Position] = {}   # order_id → Position
         self._realised_pnl_today: float = 0.0
         self._fetcher = DataFetcher()
+        self._session_trades: Dict[str, int] = {}   # "NY_2026-02-26" → count
 
         os.makedirs(TRADES_DIR, exist_ok=True)
         self._log_path = os.path.join(
@@ -72,10 +73,46 @@ class ExecutionAgent:
 
         logger.info(
             f"Paper trading simulator ready — "
-            f"starting balance: ${self._cash:,.2f}"
+            f"starting balance: ${self._cash:,.2f} | "
+            f"max {MAX_TRADES_PER_SESSION} trade per session (NY + Asia)"
         )
 
-    # ── Account helpers (same interface as the Alpaca version) ────────────────
+    # ── Session helpers ───────────────────────────────────────────────────────
+
+    def get_current_session(self) -> Optional[str]:
+        """
+        Return the active trading session name or None if between sessions.
+          NY   : 09:30 – 16:00 ET
+          ASIA : 20:00 – 04:00 ET (next day)
+        """
+        now = datetime.now(_NY)
+        t = now.hour * 60 + now.minute
+        if 9 * 60 + 30 <= t <= 16 * 60:
+            return "NY"
+        if t >= 20 * 60 or t < 4 * 60:
+            return "ASIA"
+        return None
+
+    def can_trade_this_session(self) -> bool:
+        """Return True if we haven't yet hit the per-session trade limit."""
+        session = self.get_current_session()
+        if session is None:
+            return False
+        key = f"{session}_{datetime.now().strftime('%Y-%m-%d')}"
+        return self._session_trades.get(key, 0) < MAX_TRADES_PER_SESSION
+
+    def _record_session_trade(self) -> None:
+        session = self.get_current_session()
+        if session:
+            key = f"{session}_{datetime.now().strftime('%Y-%m-%d')}"
+            self._session_trades[key] = self._session_trades.get(key, 0) + 1
+            remaining = MAX_TRADES_PER_SESSION - self._session_trades[key]
+            logger.info(
+                f"Session trade recorded [{session}] — "
+                f"{remaining} slot(s) remaining this session"
+            )
+
+    # ── Account helpers ───────────────────────────────────────────────────────
 
     def get_account_balance(self) -> float:
         """Return current cash balance."""
@@ -137,6 +174,7 @@ class ExecutionAgent:
             order_id=order_id,
             status="FILLED (simulated)",
         )
+        self._record_session_trade()
         return pos
 
     # ── Position monitoring & exit management ─────────────────────────────────

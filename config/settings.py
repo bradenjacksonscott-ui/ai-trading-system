@@ -21,10 +21,13 @@ SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "300"))
 STARTING_BALANCE: float = float(os.getenv("STARTING_BALANCE", "10000.0"))
 
 # ── Risk management ───────────────────────────────────────────────────────────
-ACCOUNT_RISK_PER_TRADE: float = float(os.getenv("ACCOUNT_RISK_PER_TRADE", "0.01"))  # 1%
-MAX_DAILY_LOSS_PCT: float = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.03"))           # 3%
+DOLLAR_RISK_PER_TRADE: float = float(os.getenv("DOLLAR_RISK_PER_TRADE", "270.0"))   # Fixed $ risk
+MAX_DAILY_LOSS_PCT: float = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.03"))           # 3% daily stop
 MAX_OPEN_TRADES: int = int(os.getenv("MAX_OPEN_TRADES", "3"))
 MIN_RISK_REWARD: float = float(os.getenv("MIN_RISK_REWARD", "1.5"))
+
+# ── Session limits ────────────────────────────────────────────────────────────
+MAX_TRADES_PER_SESSION: int = int(os.getenv("MAX_TRADES_PER_SESSION", "1"))  # 1 per NY, 1 per Asia
 
 # ── Technical analysis ────────────────────────────────────────────────────────
 SWING_LOOKBACK: int = int(os.getenv("SWING_LOOKBACK", "5"))

@@ -8,7 +8,7 @@ Rules enforced (in order):
   1. Minimum risk-reward ratio  (MIN_RISK_REWARD, default 1.5:1)
   2. Maximum concurrent open trades  (MAX_OPEN_TRADES, default 3)
   3. Maximum daily loss limit  (MAX_DAILY_LOSS_PCT, default 3 % of equity)
-  4. Position sizing  — risk at most ACCOUNT_RISK_PER_TRADE % of balance per trade
+  4. Position sizing  — fixed $270 risk per trade (DOLLAR_RISK_PER_TRADE)
   5. Sanity cap  — trade value cannot exceed 95 % of cash balance
 
 Output: ApprovedTrade dataclass (approved=True/False + rejection reason).
@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 
 from agents.market_analysis_agent import TradeSignal
 from config.settings import (
-    ACCOUNT_RISK_PER_TRADE,
+    DOLLAR_RISK_PER_TRADE,
     MAX_DAILY_LOSS_PCT,
     MAX_OPEN_TRADES,
     MIN_RISK_REWARD,
@@ -93,7 +93,7 @@ class RiskManagementAgent:
                     f"(limit {MAX_DAILY_LOSS_PCT:.0%})",
                 )
 
-        # ── Rule 4: Position sizing ───────────────────────────────────────────
+        # ── Rule 4: Position sizing (fixed $270 risk per trade) ───────────────
         risk_per_share = abs(signal.entry_price - signal.stop_loss)
         if risk_per_share <= 0:
             return _reject(
@@ -101,14 +101,13 @@ class RiskManagementAgent:
                 "Invalid stop loss — risk per share is zero or negative",
             )
 
-        dollar_risk = account_balance * ACCOUNT_RISK_PER_TRADE
-        position_size = int(dollar_risk / risk_per_share)
+        position_size = int(DOLLAR_RISK_PER_TRADE / risk_per_share)
 
         if position_size < 1:
             return _reject(
                 signal, account_balance,
                 f"Position size rounds to 0 "
-                f"(${dollar_risk:.2f} risk / ${risk_per_share:.4f}/share)",
+                f"(${DOLLAR_RISK_PER_TRADE:.2f} risk / ${risk_per_share:.4f}/share)",
             )
 
         # ── Rule 5: Trade-value cap (95 % of cash) ────────────────────────────
@@ -124,8 +123,8 @@ class RiskManagementAgent:
 
         logger.info(
             f"APPROVED {signal.symbol}: {position_size} shares | "
-            f"risk ${actual_risk:.2f} ({ACCOUNT_RISK_PER_TRADE:.0%} of "
-            f"${account_balance:,.0f}) | R:R {rr:.1f}:1"
+            f"risk ${actual_risk:.2f} (fixed ${DOLLAR_RISK_PER_TRADE:.0f}/trade) | "
+            f"R:R {rr:.1f}:1"
         )
         return ApprovedTrade(
             signal=signal,

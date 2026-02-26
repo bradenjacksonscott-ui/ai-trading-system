@@ -76,8 +76,27 @@ def run() -> None:
             else:
                 logger.info(f"{len(signals)} signal(s) found — running risk checks …")
 
+            # ── Session gate ───────────────────────────────────────────────
+            session = execution_agent.get_current_session()
+            if session and not execution_agent.can_trade_this_session():
+                logger.info(
+                    f"  [{session} session] Trade limit reached — "
+                    f"no new entries this session."
+                )
+                execution_agent.monitor_positions()
+                logger.info(f"Scan complete. Next scan in {SCAN_INTERVAL_SECONDS}s …\n")
+                time.sleep(SCAN_INTERVAL_SECONDS)
+                continue
+
             # ── Agent 2 → 3 : Risk check + Execution ──────────────────────
             for signal in signals:
+                # Re-check session limit each signal (only take 1 per session)
+                if not execution_agent.can_trade_this_session():
+                    logger.info(
+                        f"  [{session} session] Limit hit — skipping remaining signals."
+                    )
+                    break
+
                 logger.info(
                     f"  Signal  [{signal.signal_type}] {signal.symbol} "
                     f"entry={signal.entry_price:.2f}  "
@@ -109,7 +128,7 @@ def run() -> None:
 
                 order = execution_agent.execute_trade(approved)
                 if order:
-                    logger.info(f"  → ORDER PLACED  id={order.id}")
+                    logger.info(f"  → ORDER PLACED  id={order.order_id}")
 
             # ── Monitor open positions ─────────────────────────────────────
             execution_agent.monitor_positions()

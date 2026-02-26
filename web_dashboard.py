@@ -323,8 +323,9 @@ BT_HTML = BASE_STYLE + NAV + """
 </div>
 {% else %}
 <div class="section">
-  <span class="empty">No backtest data yet. Click "Run / Refresh YTD Backtest" above to generate results.</span>
+  <span class="empty">&#9203; Backtest is running in the background — auto-refreshing every 15 seconds...</span>
 </div>
+<meta http-equiv="refresh" content="15">
 {% endif %}
 """
 
@@ -377,9 +378,27 @@ def run_backtest():
 def open_browser():
     webbrowser.open("http://localhost:5001")
 
+def _auto_run_backtest():
+    """Kick off a YTD backtest in the background if no results file exists yet."""
+    if latest_backtest_file():
+        return  # Already have data
+    days_this_year = (datetime.now() - datetime(datetime.now().year, 1, 1)).days + 1
+    venv_python = os.path.join("venv", "Scripts", "python.exe")
+    python_exe  = venv_python if os.path.exists(venv_python) else sys.executable
+    try:
+        subprocess.Popen(
+            [python_exe, "backtest.py", "--days", str(days_this_year)],
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        print("  Auto-running YTD backtest in the background (~30s)...")
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
     print("\n  AI Trading Dashboard")
     print("  Opening at http://localhost:5001 ...")
     print("  Press Ctrl-C to stop.\n")
+    _auto_run_backtest()
     Timer(1.5, open_browser).start()
     app.run(host="localhost", port=5001, debug=False)

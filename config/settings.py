@@ -18,7 +18,7 @@ SYMBOLS: list = [
 SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "300"))
 
 # ── Paper trading simulator ───────────────────────────────────────────────────
-STARTING_BALANCE: float = float(os.getenv("STARTING_BALANCE", "10000.0"))
+STARTING_BALANCE: float = float(os.getenv("STARTING_BALANCE", "50000.0"))
 
 # ── Risk management ───────────────────────────────────────────────────────────
 DOLLAR_RISK_PER_TRADE: float = float(os.getenv("DOLLAR_RISK_PER_TRADE", "270.0"))   # Fixed $ risk

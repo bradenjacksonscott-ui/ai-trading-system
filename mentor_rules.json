@@ -1,0 +1,57 @@
+{
+  "_instructions": "Add rules you learn from Riley Coleman's course here. The system reads this file and uses the rules to filter and score every trade. No programming needed — just edit the values.",
+
+  "session_rules": {
+    "enabled": true,
+    "trade_only_hours": {
+      "start": "09:30",
+      "end":   "15:30",
+      "_note": "Avoid the last 30 minutes before close. Adjust if Riley recommends different hours."
+    },
+    "avoid_first_minutes": 15,
+    "_note": "Skip the first 15 minutes of market open (high volatility, false signals)."
+  },
+
+  "signal_filters": {
+    "min_confidence": 0.55,
+    "_note": "Only take signals with this confidence score or higher (0.0–1.0).",
+
+    "min_rr_ratio": 1.5,
+    "_note": "Minimum risk-reward ratio. Riley may recommend 2:1 or higher.",
+
+    "avoid_earnings_week": false,
+    "_note": "Set to true to skip trading a stock in the week of its earnings report.",
+
+    "preferred_symbols": [],
+    "_note": "Leave empty to trade all symbols, or list Riley's favourite setups e.g. ['AAPL','NVDA'].",
+
+    "blocked_symbols": [],
+    "_note": "Symbols to never trade (e.g. ones Riley says to avoid)."
+  },
+
+  "trade_management": {
+    "move_stop_to_breakeven": true,
+    "breakeven_trigger_rr": 1.0,
+    "_note": "Move stop to entry price once the trade reaches 1:1 R:R. Reduces risk on winning trades.",
+
+    "partial_exit_at_rr": 0.0,
+    "partial_exit_pct": 0.0,
+    "_note": "Set partial_exit_at_rr to e.g. 1.0 and partial_exit_pct to 0.5 to take off half the position at 1:1."
+  },
+
+  "market_conditions": {
+    "only_trade_with_trend": false,
+    "_note": "Set true to only take LONG trades in an uptrending market (SPY above 20 EMA) and SHORT in downtrend.",
+
+    "avoid_choppy_market": true,
+    "chop_adr_threshold": 0.005,
+    "_note": "If the Average Daily Range is below 0.5% the market is too choppy. Skip trading."
+  },
+
+  "notes_from_course": [
+    "Add notes here as you go through the 90-day course.",
+    "Example: Riley says to only trade the first 2 hours of the session.",
+    "Example: Riley says R:R must be at least 2:1 minimum.",
+    "Example: Riley says avoid Mondays — institutional orders not settled."
+  ]
+}
